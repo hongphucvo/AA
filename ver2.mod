@@ -29,7 +29,8 @@ tuple breakTime {
   int Machine;
   int BreakTime;
 }
-{breakTime} machineBreakTime = {< 1, 1 >, < 1, 2 >, < 1, 3 >, < 2, 1 >, < 2,2 >, < 2, 3 >, < 2, 4 >};
+{breakTime} machineBreakTime = {< 1, 1 >, < 1, 2 >, < 1, 3 >, < 2, 1 >, < 2,
+   2 >, < 2, 3 >, < 2, 4 >};
 
 tuple ite {
   int processTimeJob1;
@@ -77,60 +78,63 @@ dvar boolean v[processTimeJobOverlap][machineTime];
 // trung gian
 dvar float c[rangeProcessTimeJob][machineTime];
 dvar float Ci[rangeProcessTimeJob][machineTime];
-dvar float Cmax;
+dvar float+ Cmax;
 
-dexpr float UB = sum(i in rangeProcessTimeJob)J[i]+(numPeriodTime-1)*(2*split);
+dexpr float UB = sum ( i in rangeProcessTimeJob ) J[i] + ( numPeriodTime - 1 )
+   * ( 2 * split );
 
 
 minimize
   Cmax;
 
-subject to{
+subject to {
   forall ( i in rangeProcessTimeJob ) {
-    J[i] == sum ( <j,t> in machineTime ) y[i][<j,t>] ;
+    J[i] == sum ( < j, t > in machineTime ) y[i][< j, t >];
     // J is p
   }
-  forall(<j,t> in machineTime){
-//TODO find i   
-//	sum(i in rangeProcessTimeJob) machineAvaiTimeStart[<j,t>] <= y[i][<j,t>] <= machineAvaiTimeEnd[<j,t>];
-//	sum(i in rangeProcessTimeJob) machineAvaiTimeStart[<j,t>] <= y[t][<j,t>] <= machineAvaiTimeEnd[<j,t>];
-
-   machineAvaiTimeEnd[<j,t>]- machineAvaiTimeStart[<j,t>]>=sum(i in rangeProcessTimeJob)y[i][<j,t>];
-      } 
+  forall ( < j, t > in machineTime ) {
+    //TODO find i
+    //  sum(i in rangeProcessTimeJob) machineAvaiTimeStart[<j,t>] <= y[i][<j,t>] <= machineAvaiTimeEnd[<j,t>];
+    //  sum(i in rangeProcessTimeJob) machineAvaiTimeStart[<j,t>] <= y[t][<j,t>] <= machineAvaiTimeEnd[<j,t>];
   
-  forall ( i in rangeProcessTimeJob, <j,t> in machineTime ) {
-//    TODO: find x
-// split min
-    split * x[i,<j,t>] <= y[i][<j,t>] && y[i][<j,t>] <= J[i] * x[i][<j,t>];
+    machineAvaiTimeEnd[< j, t >] - machineAvaiTimeStart[< j, t >] >= sum 
+      ( i in rangeProcessTimeJob ) y[i][< j, t >];
   }
-  
-  forall(i in rangeProcessTimeJob,<j,t> in machineTime  ){
-    machineBrkTime[<j,t>] * x [i][<j,t>] <= s [i][<j,t>] && s [i][<j,t>]   <= machineBrkTime[<j,t+1>] * x[i][<j,t>]-y[i][<j,t>]; 
+  forall ( i in rangeProcessTimeJob, < j, t > in machineTime ) {
+    //    TODO: find x
+    // split min
+    split * x[i, < j, t >] <= y[i][< j, t >] && y[i][< j,
+       t >] <= J[i] * x[i][< j, t >];
   }
-  
-  forall(i1,i2 in rangeProcessTimeJob, <j,t> in machineTime){
-//    if(i1!=i2){
-//    c[i1][<j,t>]<= s[i2][<j,t>] &&
-//    c[i2][<j,t>]<=s[i1][<j,t>];
-//    }
-//     var 
-		c[i1][<j,t>]-s[i2][<j,t>]<= UB*v[<i1,i2>][<j,t>]&&
-		c[i2][<j,t>]-s[i1][<j,t>]<= UB*(1-v[<i1,i2>][<j,t>]);
-		
-
-
+  forall ( i in rangeProcessTimeJob, < j, t > in machineTime ) {
+    machineBrkTime[< j, t >] * x[i][< j, t >] <= s[i][< j, t >] && s[i][< j,
+       t >] <= machineBrkTime[< j, t + 1 >] * x[i][< j, t >] - y[i][< j, t >];
   }
-  
-  forall( i in rangeProcessTimeJob,<j,t1> in machineTime){
-    
-    z[i,j]<=sum(t in rangePeriodTime) x[i][<j,t>] &&
-    sum(t in rangePeriodTime) x[i][<j,t>]<=UB*z[i,j];
-//    0!=sum(<j,t> in machineTime) x[i][<j,t>] || z[i,j] != 0;
+  forall ( i1, i2 in rangeProcessTimeJob, < j, t > in machineTime ) {
+    //    if(i1!=i2){
+    //    c[i1][<j,t>]<= s[i2][<j,t>] &&
+    //    c[i2][<j,t>]<=s[i1][<j,t>];
+    //    }
+    //     var
+    c[i1][< j, t >] - s[i2][< j, t >] <= UB * v[< i1, i2 >][< j,
+       t >] && c[i2][< j, t >] - s[i1][< j, t >] <= UB * ( 1 - v[< i1,
+       i2 >][< j, t >] );
   }
-  
-  forall (i in rangeProcessTimeJob){
-    1 == sum(<j,t> in machineTime) z[i,j];
+  forall ( i in rangeProcessTimeJob, < j, t1 > in machineTime ) {
+    z[i, j] <= sum ( t in rangePeriodTime ) x[i][< j, t >] && sum 
+      ( t in rangePeriodTime ) x[i][< j, t >] <= UB * z[i, j];
+    //    0!=sum(<j,t> in machineTime) x[i][<j,t>] || z[i,j] != 0;
   }
+  forall ( i in rangeProcessTimeJob ) {
+    1 == sum ( < j, t > in machineTime ) z[i, j];
+  }
+  forall ( i in rangeProcessTimeJob, < j, t > in machineTime ) {
+    Cmax >= s[i][< j, t >] + J[i];
+  }
+  //Cmax==max(i in rangeProcessTimeJob) J[i];
+  //forall(i in rangeMachine ) Ci[j] == max(j in rangeProcessTime) c[j][i];
+  //Cmax== max(i in rangeMachine) (max (i in rangeMachine) Ci[i][j]);
+  // }
 }
 
 
