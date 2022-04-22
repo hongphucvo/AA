@@ -79,6 +79,8 @@ dvar float c[rangeProcessTimeJob][machineTime];
 dvar float Ci[rangeProcessTimeJob][machineTime];
 dvar float Cmax;
 
+dexpr float UB = sum(i in rangeProcessTimeJob)J[i]+(numPeriodTime-1)*(2*split);
+
 
 minimize
   Cmax;
@@ -107,14 +109,23 @@ subject to{
   }
   
   forall(i1,i2 in rangeProcessTimeJob, <j,t> in machineTime){
-    if(i1!=i2){
-    c[i1][<j,t>]<= s[i2][<j,t>] &&
-    c[i2][<j,t>]<=s[i1][<j,t>];
-    }
+//    if(i1!=i2){
+//    c[i1][<j,t>]<= s[i2][<j,t>] &&
+//    c[i2][<j,t>]<=s[i1][<j,t>];
+//    }
+//     var 
+		c[i1][<j,t>]-s[i2][<j,t>]<= UB*v[<i1,i2>][<j,t>]&&
+		c[i2][<j,t>]-s[i1][<j,t>]<= UB*(1-v[<i1,i2>][<j,t>]);
+		
+
+
   }
   
-  forall( i in rangeProcessTimeJob,<j,t> in machineTime){
-    0!=sum(<j,t> in machineTime) x[i][<j,t>] || z[i,j] != 0;
+  forall( i in rangeProcessTimeJob,<j,t1> in machineTime){
+    
+    z[i,j]<=sum(t in rangePeriodTime) x[i][<j,t>] &&
+    sum(t in rangePeriodTime) x[i][<j,t>]<=UB*z[i,j];
+//    0!=sum(<j,t> in machineTime) x[i][<j,t>] || z[i,j] != 0;
   }
   
   forall (i in rangeProcessTimeJob){
